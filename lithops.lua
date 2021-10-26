@@ -7,12 +7,13 @@
 --
 --
 -- E1: Adjust Reverb
--- E2: Record / Play
--- E3: Pause / Resume
+-- E2: Pitch Control
 --
--- K2: Pitch Control
--- K3 (cw): Mangle Loop
--- K3 (ccw): Restore Loop
+-- E3 (cw): Mangle Loop
+-- E3 (ccw): Restore Loop
+--
+-- K2: Record / Play
+-- K3: Pause / Resume
 -- K3 (hold): Generate Loop
 
 -- K1 (hold): Easter Egg
