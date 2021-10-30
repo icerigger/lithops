@@ -367,6 +367,7 @@ function key(n,z)
       until tape_overwrite == false
       softcut.buffer_write_mono (_path.audio.."lithops/".."lithopsloop"..tape_save..".wav",tape_loop,tape_length,0)
       print (_path.audio.."lithops/".."lithopsloop"..tape_save..".wav")
+      shift = 0
     end
   end
 end
