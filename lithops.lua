@@ -296,9 +296,7 @@ end
 
 function key(n,z)
   if n == 1 then
-    if z == 1 then
-      shift = 1
-    end
+    shift = z
   end
   if n == 2 and z == 1 then
     if loop_flag == 1 then
@@ -367,7 +365,6 @@ function key(n,z)
       until tape_overwrite == false
       softcut.buffer_write_mono (_path.audio.."lithops/".."lithopsloop"..tape_save..".wav",tape_loop,tape_length,0)
       print (_path.audio.."lithops/".."lithopsloop"..tape_save..".wav")
-      shift = 0
     end
   end
 end
