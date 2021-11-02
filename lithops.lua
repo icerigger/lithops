@@ -388,7 +388,6 @@ function enc (n,d)
     else
       audio:rev_off ()
     end
-    redraw()
   end
   if n == 2 and loop_flag == 1 then
     tape_rate = tape_rate + d
