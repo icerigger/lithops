@@ -269,12 +269,21 @@ function init()
                 {00,20,50,.1,16,1500} }
 
   params:add_separator("LITHOPS")
-  params:add_number("tape_length","LENGTH >",1,10,4)
+  params:add_number("tape_length","LENGTH >",1, 10, 4)
   params:set_action("tape_length", function(x) set_length (x) end)
   params:add_option("SPRITE >", "SPRITE >", {"tape loop", "cassette shell"}, 1)
   params:set_action("SPRITE >", function(x) set_sprite(x) end)
+  params:add_option("LABELS >", "LABELS >", {"off", "on"}, 1)
+  params:set_action("LABELS >", function(x) set_label(x) end)
   
-  preset = 0; shift = 0
+  initial_rev_return_level = params:get('rev_return_level')
+  initial_rev_pre_delay = params:get('rev_pre_delay')
+  initial_rev_lf_fc = params:get('rev_lf_fc')
+  initial_rev_low_time = params:get('rev_low_time')
+  initial_rev_mid_time = params:get('rev_mid_time')
+  initial_rev_hf_damping = params:get('rev_hf_damping')
+  
+  preset = 0; shift = 0; label_flag = 1; tape_label = "N/A"; save_flag = 0; save_sprite = 0
   tape_animation = 0; tape_collection = util.scandir(tape_location); tape_length = 4; tape_rate = 0; tape_sprite = 0
   
   animation = metro.init()                                          
@@ -284,6 +293,10 @@ function init()
   
   util.make_dir (_path.audio.."lithops/")
   
+end
+
+function set_label(x)
+  label_flag = x
 end
 
 function set_sprite(x)
@@ -337,6 +350,7 @@ function key(n,z)
         repeat
           tape_selection = tape_collection[math.random(tab.count(tape_collection))]
         until tape_selection ~= "index.txt"
+        tape_label = tape_selection 
         tape_selection = tape_location..tape_selection
         ch, samples, samplerate = audio.file_info(tape_selection)
         duration = (samples / samplerate) - tape_length
@@ -361,10 +375,12 @@ function key(n,z)
       tape_save = 0
       repeat
         tape_save = tape_save + 1
-        tape_overwrite = util.file_exists (_path.audio.."lithops/lithopsloop"..tape_save..".wav")
+        tape_overwrite = util.file_exists (_path.audio.."lithops/lithops"..tape_save..".wav")
       until tape_overwrite == false
-      softcut.buffer_write_mono (_path.audio.."lithops/".."lithopsloop"..tape_save..".wav",tape_loop,tape_length,0)
-      print (_path.audio.."lithops/".."lithopsloop"..tape_save..".wav")
+      softcut.buffer_write_mono (_path.audio.."lithops/".."lithops"..tape_save..".wav",tape_loop,tape_length,0)
+      if label_flag == 2 then
+        save_flag = 1
+      end
     end
   end
 end
@@ -393,8 +409,8 @@ function enc (n,d)
     tape_rate = tape_rate + d
     if tape_rate > 20 then
       tape_rate = 20
-    elseif tape_rate < 0 then
-      tape_rate = 0
+    elseif tape_rate < -20 then
+      tape_rate = -20
     end
     softcut.rate(1,tape_rate/10)
   end
@@ -428,15 +444,47 @@ function redraw()
     screen.fill()
     end
   end
+  
+  if label_flag == 2 and save_flag == 0 then
+    screen.move(39,61)
+    screen.level(15)
+    screen.text("Tape: "..string.sub(string.gsub(tape_label, ".wav", ""), 1, 6))
+  end
+  if label_flag == 2 and save_flag == 1 then
+    screen.move(39,61)
+    screen.level(15)
+    screen.text("Saved: "..tape_save)
+    if save_sprite == 5 then
+      save_sprite = 0
+      save_flag = 0
+    end
+    if save_flag == 1 then
+      save_sprite = save_sprite + 1
+    end
+  end
+  
   screen.update()
-  if loop_flag == 1 and tape_rate > 0 then
-    tape_sprite = tape_sprite + 1
-    if tape_sprite % 3 == 0 then
-      tape_sprite = tape_sprite - 3
+  if loop_flag == 1 then
+    if tape_rate > 0 then 
+      tape_sprite = tape_sprite + 1
+      if tape_sprite % 3 == 0 then
+        tape_sprite = tape_sprite - 3
+      end
+    elseif tape_rate < 0 then
+      if tape_sprite % 3 == 0 then
+        tape_sprite = tape_sprite + 3
+      end
+      tape_sprite = tape_sprite - 1
     end
   end
 end
 
 function cleanup()
   audio:rev_off ()
+  params:set('rev_return_level', initial_rev_return_level)
+  params:set('rev_pre_delay', initial_rev_pre_delay)
+  params:set('rev_lf_fc', initial_rev_lf_fc)
+  params:set('rev_low_time', initial_rev_low_time)
+  params:set('rev_mid_time', initial_rev_mid_time)
+  params:set('rev_hf_damping', initial_rev_hf_damping)
 end
