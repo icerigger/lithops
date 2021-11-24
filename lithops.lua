@@ -1,5 +1,5 @@
 -- Lithops
--- v2.0.0 @midworld
+-- v2.3.0 @midworld
 -- llllllll.co/t/lithops
 --
 -- Experimental Tape Player
@@ -267,6 +267,18 @@ function init()
                 {00,20,50,.1,14,1500},
                 {00,20,50,.1,15,1500},
                 {00,20,50,.1,16,1500} }
+    
+  audio.level_adc_cut(1)
+  
+  softcut.level_input_cut(1, 1, 1)
+  softcut.level_input_cut(2, 1, 0)
+  softcut.level_input_cut(1, 2, 1)
+  softcut.level_input_cut(2, 2, 0)
+  
+  softcut.rec_level(1,1)
+  softcut.pre_level(1,0)
+  softcut.rec_level(2,1)
+  softcut.pre_level(2,0)
 
   params:add_separator("LITHOPS")
   params:add_number("tape_length","LENGTH >",1, 10, 4)
@@ -275,6 +287,10 @@ function init()
   params:set_action("SPRITE >", function(x) set_sprite(x) end)
   params:add_option("LABELS >", "LABELS >", {"off", "on"}, 1)
   params:set_action("LABELS >", function(x) set_label(x) end)
+  params:add_option("SOURCE >", "SOURCE >", {"tape", "input"},1)
+  params:set_action("SOURCE >", function(x) set_source(x) end)
+  params:add_option("STEREO >", "STEREO >", {"off", "on"},1)
+  params:set_action("STEREO >", function(x) set_stereo(x) end)
   
   initial_rev_return_level = params:get('rev_return_level')
   initial_rev_pre_delay = params:get('rev_pre_delay')
@@ -283,8 +299,8 @@ function init()
   initial_rev_mid_time = params:get('rev_mid_time')
   initial_rev_hf_damping = params:get('rev_hf_damping')
   
-  preset = 0; shift = 0; label_flag = 1; tape_label = "N/A"; save_flag = 0; save_sprite = 0
-  tape_animation = 0; tape_collection = util.scandir(tape_location); tape_length = 4; tape_rate = 0; tape_sprite = 0
+  preset = 0; shift = 0; label_flag = 1; tape_label = "N/A"; rec_flag = 0; save_flag = 0; save_sprite = 0; source = 1
+  tape_animation = 0; tape_collection = util.scandir(tape_location); tape_length = 4; tape_rate = 0; tape_sprite = 0; tape_loop = 0
   
   animation = metro.init()                                          
   animation.time = 1/15
@@ -293,6 +309,24 @@ function init()
   
   util.make_dir (_path.audio.."lithops/")
   
+end
+
+function set_stereo(x)
+  if x == 1 then
+    softcut.level_input_cut(1, 1, 1)
+    softcut.level_input_cut(2, 1, 0)
+    softcut.level_input_cut(1, 2, 1)
+    softcut.level_input_cut(2, 2, 0)
+  else
+    softcut.level_input_cut(1, 1, 1)
+    softcut.level_input_cut(2, 1, 0)
+    softcut.level_input_cut(1, 2, 0)
+    softcut.level_input_cut(2, 2, 1)
+  end
+end
+
+function set_source(x)
+  source = x
 end
 
 function set_label(x)
@@ -320,7 +354,43 @@ function key(n,z)
       loop_flag = 1
     end
   end
-  if n == 3 and shift == 0 then
+  
+  if n == 3 and source == 2 and shift == 0 then
+    if z == 1 then
+      down_time = util.time()
+    else
+      hold_time = util.time() - down_time
+      if hold_time > 1 then
+      else
+        if rec_flag == 0 then
+          softcut.buffer_clear()
+          for i = 1, 2 do
+            softcut.enable(i,1)
+            softcut.buffer(i,i)
+            softcut.level(i,1)
+            softcut.loop(i,1)
+            softcut.loop_start(i,0)
+            softcut.loop_end(i,tape_length)
+            softcut.position(i,1)
+            softcut.rate(i,1)
+            softcut.rec(i,1)
+          end
+          rec_flag = 1
+          loop_flag = 1
+          tape_rate = 10
+          tape_loop = 0
+          tape_label = "USER"
+        elseif rec_flag == 1 then
+          softcut.rec(1,0)
+          softcut.rec(2,0)
+          softcut.play(1,1)
+          rec_flag = 0
+        end
+      end
+    end
+  end
+  
+  if n == 3 and source == 1 and shift == 0 then
     if z == 1 then
       down_time = util.time()
     else
@@ -444,14 +514,13 @@ function redraw()
     screen.fill()
     end
   end
-  
   if label_flag == 2 and save_flag == 0 then
-    screen.move(39,61)
+    screen.move(43,61)
     screen.level(15)
     screen.text("Tape: "..string.sub(string.gsub(tape_label, ".wav", ""), 1, 6))
   end
   if label_flag == 2 and save_flag == 1 then
-    screen.move(39,61)
+    screen.move(43,61)
     screen.level(15)
     screen.text("Saved: "..tape_save)
     if save_sprite == 5 then
@@ -462,7 +531,6 @@ function redraw()
       save_sprite = save_sprite + 1
     end
   end
-  
   screen.update()
   if loop_flag == 1 then
     if tape_rate > 0 then 
