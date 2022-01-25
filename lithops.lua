@@ -347,10 +347,32 @@ function key(n,z)
   end
   if n == 2 and z == 1 then
     if loop_flag == 1 then
-      softcut.play(1,0)
+      rate = tape_rate/10
+      while rate > 0 do
+        rate = rate - (1/5000)
+        for i = 1, 2 do
+          softcut.rate(i,rate)
+        end
+      end
+      for i = 1, 2 do
+        softcut.rate(i,0)
+        softcut.play(i,0)
+      end
       loop_flag = 0
     else
-      softcut.play(1,1)
+      for i = 1, 2 do
+        softcut.play(i,1)
+      end
+      goal = tape_rate/10
+      while rate < goal do
+        rate = rate + (1/5000)
+        for i = 1, 2 do
+          softcut.rate(i,rate)
+        end
+      end
+      for i = 1, 2 do
+        softcut.rate(i,goal)
+      end
       loop_flag = 1
     end
   end
