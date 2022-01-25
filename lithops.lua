@@ -279,6 +279,9 @@ function init()
   softcut.pre_level(1,0)
   softcut.rec_level(2,1)
   softcut.pre_level(2,0)
+  
+  softcut.rate_slew_time(1,2)
+  softcut.rate_slew_time(1,2)
 
   params:add_separator("LITHOPS")
   params:add_number("tape_length","LENGTH >",1, 10, 4)
@@ -347,31 +350,13 @@ function key(n,z)
   end
   if n == 2 and z == 1 then
     if loop_flag == 1 then
-      rate = tape_rate/10
-      while rate > 0 do
-        rate = rate - (1/5000)
-        for i = 1, 2 do
-          softcut.rate(i,rate)
-        end
-      end
       for i = 1, 2 do
         softcut.rate(i,0)
-        softcut.play(i,0)
       end
       loop_flag = 0
     else
       for i = 1, 2 do
-        softcut.play(i,1)
-      end
-      goal = tape_rate/10
-      while rate < goal do
-        rate = rate + (1/5000)
-        for i = 1, 2 do
-          softcut.rate(i,rate)
-        end
-      end
-      for i = 1, 2 do
-        softcut.rate(i,goal)
+        softcut.rate(i,tape_rate/10)
       end
       loop_flag = 1
     end
